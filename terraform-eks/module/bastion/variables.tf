@@ -13,11 +13,6 @@ variable "cluster_name" {
   type        = string
 }
 
-variable "key_name" {
-  description = "Name of the SSH key pair to use for the bastion host"
-  type        = string
-}
-
 variable "tags" {
   description = "A map of tags to add to all resources"
   type        = map(string)

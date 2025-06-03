@@ -98,13 +98,11 @@ module "eks" {
 module "bastion" {
   source = "../module/bastion"
 
-  vpc_id           = module.vpc.vpc_id
-  public_subnet_id = module.vpc.public_subnets[0]
-  cluster_name     = module.eks.cluster_name
-  key_name         = "eks-key" # Asegúrate de crear este key pair en AWS
-
+  vpc_id            = module.vpc.vpc_id
+  public_subnet_id  = module.vpc.public_subnets[0]
+  cluster_name      = module.eks.cluster_name
   tags = {
-    Environment = "production"
+    Environment = "dev"
     Terraform   = "true"
   }
 }

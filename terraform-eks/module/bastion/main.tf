@@ -4,29 +4,11 @@ terraform {
       source  = "hashicorp/aws"
       version = ">= 5.20.0"
     }
-    tls = {
-      source  = "hashicorp/tls"
-      version = ">= 4.0"
-    }
   }
 }
 
 provider "aws" {
   region = "us-east-1"
-}
-
-# Generate SSH key pair
-resource "tls_private_key" "this" {
-  algorithm = "RSA"
-  rsa_bits  = 4096
-}
-
-# Create AWS key pair
-resource "aws_key_pair" "this" {
-  key_name   = "${var.key_name}-${random_string.suffix.result}"
-  public_key = tls_private_key.this.public_key_openssh
-
-  tags = var.tags
 }
 
 # Random string for unique names
@@ -40,13 +22,6 @@ resource "random_string" "suffix" {
 resource "aws_security_group" "bastion" {
   name_prefix = "bastion-sg"
   vpc_id      = var.vpc_id
-
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
 
   egress {
     from_port   = 0
@@ -110,6 +85,12 @@ resource "aws_iam_role_policy" "bastion" {
   })
 }
 
+# IAM Policy for Session Manager
+resource "aws_iam_role_policy_attachment" "ssm_policy" {
+  role       = aws_iam_role.bastion.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
 # IAM Instance Profile
 resource "aws_iam_instance_profile" "bastion" {
   name = "bastion-profile-${random_string.suffix.result}"
@@ -152,7 +133,6 @@ resource "aws_instance" "bastion" {
   vpc_security_group_ids = [aws_security_group.bastion.id]
   iam_instance_profile   = aws_iam_instance_profile.bastion.name
   user_data              = data.template_file.user_data.rendered
-  key_name               = aws_key_pair.this.key_name
 
   tags = merge(
     var.tags,

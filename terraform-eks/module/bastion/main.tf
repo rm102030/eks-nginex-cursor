@@ -23,11 +23,22 @@ resource "aws_security_group" "bastion" {
   name_prefix = "bastion-sg"
   vpc_id      = var.vpc_id
 
+  # Allow HTTPS for SSM Agent
+  egress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow HTTPS for SSM Agent"
+  }
+
+  # Allow all outbound traffic
   egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow all outbound traffic"
   }
 
   tags = merge(
@@ -113,9 +124,17 @@ data "template_file" "user_data" {
   template = <<-EOF
               #!/bin/bash
               # Install SSM Agent
+              apt-get update
+              apt-get install -y snapd
+              systemctl enable snapd
+              systemctl start snapd
+              sleep 10
               snap install amazon-ssm-agent --classic
               systemctl enable snap.amazon-ssm-agent.amazon-ssm-agent.service
               systemctl start snap.amazon-ssm-agent.amazon-ssm-agent.service
+              
+              # Verify SSM Agent status
+              systemctl status snap.amazon-ssm-agent.amazon-ssm-agent.service
 
               # Install kubectl
               curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"

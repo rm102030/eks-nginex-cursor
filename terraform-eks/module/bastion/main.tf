@@ -168,6 +168,7 @@ resource "aws_instance" "bastion" {
   vpc_security_group_ids = [aws_security_group.bastion.id]
   iam_instance_profile   = aws_iam_instance_profile.bastion.name
   user_data              = data.template_file.user_data.rendered
+  associate_public_ip_address = true  # Asegurar que tenga IP pública
 
   tags = merge(
     var.tags,

@@ -22,7 +22,7 @@ resource "random_string" "suffix" {
 }
 
 resource "aws_eks_cluster" "this" {
-  name     = var.cluster_name
+  name     = "${var.cluster_name}-${random_string.suffix.result}"
   role_arn = aws_iam_role.cluster.arn
   version  = var.cluster_version
 

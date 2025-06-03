@@ -3,64 +3,89 @@ name: 'Terraform Destroy'
 on:
   workflow_dispatch:
     inputs:
-      environment:
-        description: 'Environment to destroy'
-        required: true
-        default: 'production'
-        type: choice
-        options:
-          - production
-          - staging
       auto_approve:
-        description: 'Auto approve terraform destroy'
+        description: 'Auto approve the destroy operation'
         required: true
-        default: 'false'
+        default: true
         type: boolean
-
-permissions:
-  contents: read
-  pull-requests: write
 
 jobs:
   terraform:
-    name: 'Terraform Destroy'
+    name: 'Terraform'
     runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment }}
+    environment: production
 
     defaults:
       run:
-        working-directory: ./terraform-eks/example
+        shell: bash
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
         aws-region: us-east-1
 
     - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v2
+      uses: hashicorp/setup-terraform@v3
       with:
-        terraform_version: 1.0.0
+        terraform_version: 1.5.7
+
+    - name: Terraform Format
+      id: fmt
+      run: terraform fmt -check
+      continue-on-error: true
 
     - name: Terraform Init
       id: init
       run: terraform init
+      working-directory: ./terraform-eks/example
 
-    - name: Terraform Plan Destroy
+    - name: Terraform Validate
+      id: validate
+      run: terraform validate -no-color
+      working-directory: ./terraform-eks/example
+
+    - name: Terraform Plan
       id: plan
-      run: terraform plan -destroy -no-color
+      if: github.event.inputs.auto_approve == 'false'
+      run: terraform plan -no-color
+      working-directory: ./terraform-eks/example
       continue-on-error: true
 
-    - name: Terraform Destroy
-      if: github.event.inputs.auto_approve == 'true'
-      run: terraform destroy -auto-approve
-
-    - name: Terraform Destroy (Manual Approval)
+    - name: Update Pull Request
+      uses: actions/github-script@v7
       if: github.event.inputs.auto_approve == 'false'
-      run: terraform destroy 
+      env:
+        PLAN: "${{ steps.plan.outputs.stdout }}"
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+          #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+          #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+          #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+
+          <details><summary>Show Plan</summary>
+
+          \`\`\`\n
+          ${process.env.PLAN}
+          \`\`\`
+
+          </details>`;
+
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.name,
+            body: output
+          })
+
+    - name: Terraform Destroy
+      id: destroy
+      run: terraform destroy -auto-approve
+      working-directory: ./terraform-eks/example 

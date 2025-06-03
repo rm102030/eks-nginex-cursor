@@ -88,7 +88,12 @@ resource "aws_iam_role_policy" "bastion" {
           "eks:ListNodegroups",
           "eks:DescribeNodegroup",
           "eks:ListAddons",
-          "eks:DescribeAddon"
+          "eks:DescribeAddon",
+          "eks:GetToken",
+          "eks:DescribeNodegroup",
+          "eks:ListNodegroups",
+          "eks:DescribeCluster",
+          "eks:ListClusters"
         ]
         Resource = "*"
       }
@@ -157,6 +162,42 @@ data "template_file" "user_data" {
 
               # Configure kubectl for EKS
               aws eks update-kubeconfig --name ${var.cluster_name} --region us-east-1
+
+              # Create .kube directory and set permissions
+              mkdir -p /home/ubuntu/.kube
+              chown -R ubuntu:ubuntu /home/ubuntu/.kube
+              chmod 700 /home/ubuntu/.kube
+
+              # Move kubeconfig to user's home directory
+              mv /root/.kube/config /home/ubuntu/.kube/
+              chown ubuntu:ubuntu /home/ubuntu/.kube/config
+              chmod 600 /home/ubuntu/.kube/config
+
+              # Add kubectl completion
+              echo 'source <(kubectl completion bash)' >> /home/ubuntu/.bashrc
+              echo 'alias k=kubectl' >> /home/ubuntu/.bashrc
+              echo 'complete -F __start_kubectl k' >> /home/ubuntu/.bashrc
+
+              # Add AWS CLI completion
+              echo 'complete -C /usr/local/bin/aws_completer aws' >> /home/ubuntu/.bashrc
+
+              # Set environment variables
+              echo 'export AWS_DEFAULT_REGION=us-east-1' >> /home/ubuntu/.bashrc
+              echo 'export KUBECONFIG=/home/ubuntu/.kube/config' >> /home/ubuntu/.bashrc
+
+              # Install additional useful tools
+              apt-get install -y jq gettext-base
+
+              # Create a test script to verify cluster access
+              cat > /home/ubuntu/test-cluster.sh << 'EOT'
+              #!/bin/bash
+              echo "Testing cluster access..."
+              kubectl get nodes
+              kubectl get pods -A
+              EOT
+
+              chmod +x /home/ubuntu/test-cluster.sh
+              chown ubuntu:ubuntu /home/ubuntu/test-cluster.sh
               EOF
 }
 

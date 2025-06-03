@@ -2,11 +2,14 @@ provider "aws" {
   region = "us-east-1"
 }
 
-provider "null" {}
+provider "kubernetes" {
+  host                   = module.eks.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+}
 
 # VPC and Subnet configuration
 module "vpc" {
-  source = "../../../module"
+  source = "../../../module/vpc"
 
   vpc_cidr = "10.0.0.0/16"
   azs      = ["us-east-1a", "us-east-1b", "us-east-1c"]
@@ -28,7 +31,7 @@ module "vpc" {
 
 # EKS Cluster
 module "eks" {
-  source = "../../../module"
+  source = "../../../module/eks"
 
   cluster_name    = "example-eks-cluster"
   cluster_version = "1.27"

@@ -170,13 +170,13 @@ data "template_file" "user_data" {
               CLUSTER_CA=$(aws eks describe-cluster --name example-eks-cluster-01yscdhc --region us-east-1 --query 'cluster.certificateAuthority.data' --output text)
 
               # Create kubeconfig file
-              cat > /home/ubuntu/.kube/config << EOT
+              cat > /home/ubuntu/.kube/config << 'EOT'
               apiVersion: v1
               kind: Config
               clusters:
               - cluster:
-                  certificate-authority-data: ${CLUSTER_CA}
-                  server: ${CLUSTER_ENDPOINT}
+                  certificate-authority-data: $CLUSTER_CA
+                  server: $CLUSTER_ENDPOINT
                 name: example-eks-cluster-01yscdhc
               contexts:
               - context:
@@ -235,13 +235,13 @@ data "template_file" "user_data" {
               CLUSTER_ENDPOINT=$(aws eks describe-cluster --name example-eks-cluster-01yscdhc --region us-east-1 --query 'cluster.endpoint' --output text)
               CLUSTER_CA=$(aws eks describe-cluster --name example-eks-cluster-01yscdhc --region us-east-1 --query 'cluster.certificateAuthority.data' --output text)
 
-              cat > /home/ubuntu/.kube/config << EOT
+              cat > /home/ubuntu/.kube/config << 'EOT'
               apiVersion: v1
               kind: Config
               clusters:
               - cluster:
-                  certificate-authority-data: ${CLUSTER_CA}
-                  server: ${CLUSTER_ENDPOINT}
+                  certificate-authority-data: $CLUSTER_CA
+                  server: $CLUSTER_ENDPOINT
                 name: example-eks-cluster-01yscdhc
               contexts:
               - context:

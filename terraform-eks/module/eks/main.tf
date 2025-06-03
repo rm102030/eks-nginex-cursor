@@ -4,11 +4,21 @@ terraform {
       source  = "hashicorp/aws"
       version = ">= 5.20.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = ">= 3.0"
+    }
   }
 }
 
 provider "aws" {
   region = "us-east-1"
+}
+
+resource "random_string" "suffix" {
+  length  = 8
+  special = false
+  upper   = false
 }
 
 resource "aws_eks_cluster" "this" {
@@ -32,7 +42,7 @@ resource "aws_eks_cluster" "this" {
 }
 
 resource "aws_iam_role" "cluster" {
-  name = "${var.cluster_name}-cluster-role"
+  name = "${var.cluster_name}-cluster-role-${random_string.suffix.result}"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -128,7 +138,7 @@ resource "aws_eks_node_group" "this" {
 }
 
 resource "aws_iam_role" "node" {
-  name = "${var.cluster_name}-node-role"
+  name = "${var.cluster_name}-node-role-${random_string.suffix.result}"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"

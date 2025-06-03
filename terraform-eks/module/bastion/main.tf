@@ -160,13 +160,13 @@ data "template_file" "user_data" {
               unzip awscliv2.zip
               ./aws/install
 
-              # Configure kubectl for EKS
-              aws eks update-kubeconfig --name ${var.cluster_name} --region us-east-1
-
               # Create .kube directory and set permissions
               mkdir -p /home/ubuntu/.kube
               chown -R ubuntu:ubuntu /home/ubuntu/.kube
               chmod 700 /home/ubuntu/.kube
+
+              # Configure kubectl for EKS
+              aws eks update-kubeconfig --name example-eks-cluster-01yscdhc --region us-east-1
 
               # Move kubeconfig to user's home directory
               mv /root/.kube/config /home/ubuntu/.kube/
@@ -198,6 +198,19 @@ data "template_file" "user_data" {
 
               chmod +x /home/ubuntu/test-cluster.sh
               chown ubuntu:ubuntu /home/ubuntu/test-cluster.sh
+
+              # Create a script to update kubeconfig
+              cat > /home/ubuntu/update-kubeconfig.sh << 'EOT'
+              #!/bin/bash
+              aws eks update-kubeconfig --name example-eks-cluster-01yscdhc --region us-east-1
+              mv /root/.kube/config /home/ubuntu/.kube/
+              chown ubuntu:ubuntu /home/ubuntu/.kube/config
+              chmod 600 /home/ubuntu/.kube/config
+              echo "Kubeconfig updated successfully!"
+              EOT
+
+              chmod +x /home/ubuntu/update-kubeconfig.sh
+              chown ubuntu:ubuntu /home/ubuntu/update-kubeconfig.sh
               EOF
 }
 

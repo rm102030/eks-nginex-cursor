@@ -1,0 +1,47 @@
+name: 'Kubernetes'
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'k8s/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'k8s/**'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  deploy:
+    name: 'Deploy to EKS'
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    - name: Update kubeconfig
+      run: aws eks update-kubeconfig --name example-eks-cluster --region us-east-1
+
+    - name: Deploy to EKS
+      run: |
+        kubectl apply -f k8s/namespace.yaml
+        kubectl apply -f k8s/nginx-deployment.yaml
+        kubectl apply -f k8s/nginx-service.yaml
+
+    - name: Verify deployment
+      run: |
+        kubectl get all -n frontend
+        echo "Waiting for pods to be ready..."
+        kubectl wait --for=condition=ready pod -l app=nginx -n frontend --timeout=300s 

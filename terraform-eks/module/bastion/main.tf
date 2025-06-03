@@ -4,11 +4,36 @@ terraform {
       source  = "hashicorp/aws"
       version = ">= 5.20.0"
     }
+    tls = {
+      source  = "hashicorp/tls"
+      version = ">= 4.0"
+    }
   }
 }
 
 provider "aws" {
   region = "us-east-1"
+}
+
+# Generate SSH key pair
+resource "tls_private_key" "this" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+# Create AWS key pair
+resource "aws_key_pair" "this" {
+  key_name   = "${var.key_name}-${random_string.suffix.result}"
+  public_key = tls_private_key.this.public_key_openssh
+
+  tags = var.tags
+}
+
+# Random string for unique names
+resource "random_string" "suffix" {
+  length  = 8
+  special = false
+  upper   = false
 }
 
 # Security Group for Bastion
@@ -40,7 +65,7 @@ resource "aws_security_group" "bastion" {
 
 # IAM Role for Bastion
 resource "aws_iam_role" "bastion" {
-  name = "bastion-role"
+  name = "bastion-role-${random_string.suffix.result}"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -60,7 +85,7 @@ resource "aws_iam_role" "bastion" {
 
 # IAM Policy for EKS access
 resource "aws_iam_role_policy" "bastion" {
-  name = "bastion-policy"
+  name = "bastion-policy-${random_string.suffix.result}"
   role = aws_iam_role.bastion.id
 
   policy = jsonencode({
@@ -87,7 +112,7 @@ resource "aws_iam_role_policy" "bastion" {
 
 # IAM Instance Profile
 resource "aws_iam_instance_profile" "bastion" {
-  name = "bastion-profile"
+  name = "bastion-profile-${random_string.suffix.result}"
   role = aws_iam_role.bastion.name
 }
 
@@ -127,7 +152,7 @@ resource "aws_instance" "bastion" {
   vpc_security_group_ids = [aws_security_group.bastion.id]
   iam_instance_profile   = aws_iam_instance_profile.bastion.name
   user_data              = data.template_file.user_data.rendered
-  key_name               = var.key_name
+  key_name               = aws_key_pair.this.key_name
 
   tags = merge(
     var.tags,

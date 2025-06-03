@@ -91,6 +91,17 @@ resource "aws_iam_role_policy_attachment" "ssm_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
+# Additional SSM policies
+resource "aws_iam_role_policy_attachment" "ssm_directory_policy" {
+  role       = aws_iam_role.bastion.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMDirectoryServiceAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "cloudwatch_policy" {
+  role       = aws_iam_role.bastion.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+}
+
 # IAM Instance Profile
 resource "aws_iam_instance_profile" "bastion" {
   name = "bastion-profile-${random_string.suffix.result}"
@@ -101,6 +112,11 @@ resource "aws_iam_instance_profile" "bastion" {
 data "template_file" "user_data" {
   template = <<-EOF
               #!/bin/bash
+              # Install SSM Agent
+              snap install amazon-ssm-agent --classic
+              systemctl enable snap.amazon-ssm-agent.amazon-ssm-agent.service
+              systemctl start snap.amazon-ssm-agent.amazon-ssm-agent.service
+
               # Install kubectl
               curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
               chmod +x kubectl

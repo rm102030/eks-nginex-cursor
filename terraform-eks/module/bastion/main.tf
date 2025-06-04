@@ -301,8 +301,8 @@ apiVersion: v1
 kind: Config
 clusters:
 - cluster:
-    certificate-authority-data: ${CLUSTER_CA}
-    server: ${CLUSTER_ENDPOINT}
+    certificate-authority-data: $CLUSTER_CA
+    server: $CLUSTER_ENDPOINT
   name: example-eks-cluster-01yscdhc
 contexts:
 - context:

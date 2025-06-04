@@ -226,35 +226,35 @@ data "template_file" "user_data" {
               CLUSTER_CA=$(aws eks describe-cluster --name example-eks-cluster-01yscdhc --region us-east-1 --query 'cluster.certificateAuthority.data' --output text)
 
               # Create kubeconfig file
-              cat > /home/ubuntu/.kube/config << 'EOT'
-              apiVersion: v1
-              kind: Config
-              clusters:
-              - cluster:
-                  certificate-authority-data: $CLUSTER_CA
-                  server: $CLUSTER_ENDPOINT
-                name: example-eks-cluster-01yscdhc
-              contexts:
-              - context:
-                  cluster: example-eks-cluster-01yscdhc
-                  user: aws
-                name: aws
-              current-context: aws
-              preferences: {}
-              users:
-              - name: aws
-                user:
-                  exec:
-                    apiVersion: client.authentication.k8s.io/v1beta1
-                    command: aws
-                    args:
-                      - eks
-                      - get-token
-                      - --cluster-name
-                      - example-eks-cluster-01yscdhc
-                      - --region
-                      - us-east-1
-              EOT
+              cat > /home/ubuntu/.kube/config << EOF
+apiVersion: v1
+kind: Config
+clusters:
+- cluster:
+    certificate-authority-data: ${CLUSTER_CA}
+    server: ${CLUSTER_ENDPOINT}
+  name: example-eks-cluster-01yscdhc
+contexts:
+- context:
+    cluster: example-eks-cluster-01yscdhc
+    user: aws
+  name: aws
+current-context: aws
+preferences: {}
+users:
+- name: aws
+  user:
+    exec:
+      apiVersion: client.authentication.k8s.io/v1beta1
+      command: aws
+      args:
+        - eks
+        - get-token
+        - --cluster-name
+        - example-eks-cluster-01yscdhc
+        - --region
+        - us-east-1
+EOF
 
               chown ubuntu:ubuntu /home/ubuntu/.kube/config
               chmod 600 /home/ubuntu/.kube/config

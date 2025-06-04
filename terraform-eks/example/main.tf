@@ -94,19 +94,6 @@ module "eks" {
   }
 }
 
-# Bastion Host
-module "bastion" {
-  source = "../module/bastion"
-
-  vpc_id            = module.vpc.vpc_id
-  public_subnet_id  = module.vpc.public_subnets[0]
-  cluster_name      = module.eks.cluster_name
-  tags = {
-    Environment = "dev"
-    Terraform   = "true"
-  }
-}
-
 # Deploy NGINX after cluster is ready
 resource "kubernetes_namespace" "frontend" {
   metadata {

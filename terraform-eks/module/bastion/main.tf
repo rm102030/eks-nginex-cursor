@@ -169,6 +169,9 @@ data "template_file" "user_data" {
               unzip awscliv2.zip
               ./aws/install
 
+              # Install network troubleshooting tools
+              apt-get install -y dnsutils iputils-ping traceroute net-tools
+
               # Create .kube directory and set permissions
               mkdir -p /home/ubuntu/.kube
               chown -R ubuntu:ubuntu /home/ubuntu/.kube
@@ -303,6 +306,18 @@ data "template_file" "user_data" {
 
               chmod +x /home/ubuntu/verify-network.sh
               chown ubuntu:ubuntu /home/ubuntu/verify-network.sh
+
+              # Create a script to fix DNS resolution
+              cat > /home/ubuntu/fix-dns.sh << 'EOT'
+              #!/bin/bash
+              echo "Fixing DNS resolution..."
+              echo "nameserver 8.8.8.8" > /etc/resolv.conf
+              echo "nameserver 8.8.4.4" >> /etc/resolv.conf
+              echo "DNS configuration updated"
+              EOT
+
+              chmod +x /home/ubuntu/fix-dns.sh
+              chown ubuntu:ubuntu /home/ubuntu/fix-dns.sh
               EOF
 }
 

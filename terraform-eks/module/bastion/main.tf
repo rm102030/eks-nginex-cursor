@@ -23,13 +23,22 @@ resource "aws_security_group" "bastion" {
   name_prefix = "bastion-sg"
   vpc_id      = var.vpc_id
 
-  # Allow HTTPS for SSM Agent
+  # Allow HTTPS for SSM Agent and EKS
   egress {
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
-    description = "Allow HTTPS for SSM Agent"
+    description = "Allow HTTPS for SSM Agent and EKS"
+  }
+
+  # Allow DNS
+  egress {
+    from_port   = 53
+    to_port     = 53
+    protocol    = "udp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow DNS"
   }
 
   # Allow all outbound traffic
@@ -222,6 +231,11 @@ data "template_file" "user_data" {
               cat > /home/ubuntu/test-cluster.sh << 'EOT'
               #!/bin/bash
               echo "Testing cluster access..."
+              echo "Testing DNS resolution..."
+              nslookup example-eks-cluster-01yscdhc.gr7.us-east-1.eks.amazonaws.com
+              echo "Testing cluster endpoint..."
+              curl -k https://example-eks-cluster-01yscdhc.gr7.us-east-1.eks.amazonaws.com/healthz
+              echo "Testing kubectl..."
               kubectl get nodes
               kubectl get pods -A
               EOT

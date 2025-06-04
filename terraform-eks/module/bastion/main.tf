@@ -362,6 +362,24 @@ data "template_file" "user_data" {
 
               chmod +x /home/ubuntu/fix-dns.sh
               chown ubuntu:ubuntu /home/ubuntu/fix-dns.sh
+
+              # Create a script to view kubectl configuration
+              cat > /home/ubuntu/view-kubeconfig.sh << 'EOT'
+              #!/bin/bash
+              echo "=== Current kubectl configuration ==="
+              kubectl config view
+              echo -e "\n=== Current context ==="
+              kubectl config current-context
+              echo -e "\n=== Available contexts ==="
+              kubectl config get-contexts
+              echo -e "\n=== Cluster info ==="
+              kubectl cluster-info
+              echo -e "\n=== Raw kubeconfig file ==="
+              cat /home/ubuntu/.kube/config
+              EOT
+
+              chmod +x /home/ubuntu/view-kubeconfig.sh
+              chown ubuntu:ubuntu /home/ubuntu/view-kubeconfig.sh
               EOF
 }
 

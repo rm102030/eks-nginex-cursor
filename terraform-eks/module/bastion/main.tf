@@ -226,7 +226,7 @@ data "template_file" "user_data" {
               CLUSTER_CA=$(aws eks describe-cluster --name example-eks-cluster-01yscdhc --region us-east-1 --query 'cluster.certificateAuthority.data' --output text)
 
               # Create kubeconfig file
-              cat > /home/ubuntu/.kube/config << EOF
+              cat << 'EOF' > /home/ubuntu/.kube/config
 apiVersion: v1
 kind: Config
 clusters:

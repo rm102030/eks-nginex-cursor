@@ -291,12 +291,12 @@ EOT
     chown ubuntu:ubuntu /home/ubuntu/test-cluster.sh
 
     # Create a script to update kubeconfig
-    cat > /home/ubuntu/update-kubeconfig.sh << EOT
+    cat > /home/ubuntu/update-kubeconfig.sh << 'EOT'
 #!/bin/bash
 CLUSTER_ENDPOINT=$(aws eks describe-cluster --name example-eks-cluster-01yscdhc --region us-east-1 --query 'cluster.endpoint' --output text)
 CLUSTER_CA=$(aws eks describe-cluster --name example-eks-cluster-01yscdhc --region us-east-1 --query 'cluster.certificateAuthority.data' --output text)
 
-cat > /home/ubuntu/.kube/config << EOT
+cat > /home/ubuntu/.kube/config << EOF
 apiVersion: v1
 kind: Config
 clusters:
@@ -324,7 +324,7 @@ users:
         - example-eks-cluster-01yscdhc
         - --region
         - us-east-1
-EOT
+EOF
 
 chown ubuntu:ubuntu /home/ubuntu/.kube/config
 chmod 600 /home/ubuntu/.kube/config

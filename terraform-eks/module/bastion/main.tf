@@ -296,7 +296,7 @@ EOT
 CLUSTER_ENDPOINT=$(aws eks describe-cluster --name example-eks-cluster-01yscdhc --region us-east-1 --query 'cluster.endpoint' --output text)
 CLUSTER_CA=$(aws eks describe-cluster --name example-eks-cluster-01yscdhc --region us-east-1 --query 'cluster.certificateAuthority.data' --output text)
 
-cat > /home/ubuntu/.kube/config << EOF
+cat > /home/ubuntu/.kube/config << 'EOF'
 apiVersion: v1
 kind: Config
 clusters:

@@ -102,7 +102,33 @@ resource "aws_iam_role_policy" "bastion" {
           "eks:DescribeNodegroup",
           "eks:ListNodegroups",
           "eks:DescribeCluster",
-          "eks:ListClusters"
+          "eks:ListClusters",
+          "eks:UpdateClusterConfig",
+          "eks:UpdateClusterVersion",
+          "eks:UpdateNodegroupConfig",
+          "eks:UpdateNodegroupVersion",
+          "eks:TagResource",
+          "eks:UntagResource",
+          "eks:ListTagsForResource"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "iam:GetRole",
+          "iam:ListRoles"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ec2:DescribeInstances",
+          "ec2:DescribeRouteTables",
+          "ec2:DescribeSecurityGroups",
+          "ec2:DescribeSubnets",
+          "ec2:DescribeVpcs"
         ]
         Resource = "*"
       }
@@ -125,6 +151,24 @@ resource "aws_iam_role_policy_attachment" "ssm_directory_policy" {
 resource "aws_iam_role_policy_attachment" "cloudwatch_policy" {
   role       = aws_iam_role.bastion.name
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+}
+
+# Add EKS policy
+resource "aws_iam_role_policy_attachment" "eks_policy" {
+  role       = aws_iam_role.bastion.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
+}
+
+# Add EKS CNI policy
+resource "aws_iam_role_policy_attachment" "eks_cni_policy" {
+  role       = aws_iam_role.bastion.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+}
+
+# Add EKS VPC Resource Controller policy
+resource "aws_iam_role_policy_attachment" "eks_vpc_policy" {
+  role       = aws_iam_role.bastion.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSVPCResourceController"
 }
 
 # IAM Instance Profile

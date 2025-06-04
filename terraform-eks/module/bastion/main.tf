@@ -286,6 +286,23 @@ data "template_file" "user_data" {
 
               chmod +x /home/ubuntu/update-kubeconfig.sh
               chown ubuntu:ubuntu /home/ubuntu/update-kubeconfig.sh
+
+              # Create a script to verify network connectivity
+              cat > /home/ubuntu/verify-network.sh << 'EOT'
+              #!/bin/bash
+              echo "Verifying network connectivity..."
+              echo "Testing DNS resolution..."
+              nslookup example-eks-cluster-01yscdhc.gr7.us-east-1.eks.amazonaws.com
+              echo "Testing route to cluster endpoint..."
+              traceroute example-eks-cluster-01yscdhc.gr7.us-east-1.eks.amazonaws.com
+              echo "Testing HTTPS connectivity..."
+              curl -v -k https://example-eks-cluster-01yscdhc.gr7.us-east-1.eks.amazonaws.com/healthz
+              echo "Testing AWS CLI connectivity..."
+              aws eks describe-cluster --name example-eks-cluster-01yscdhc --region us-east-1 --query 'cluster.endpoint' --output text
+              EOT
+
+              chmod +x /home/ubuntu/verify-network.sh
+              chown ubuntu:ubuntu /home/ubuntu/verify-network.sh
               EOF
 }
 
